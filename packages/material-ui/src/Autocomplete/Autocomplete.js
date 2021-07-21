@@ -1,9 +1,9 @@
 import * as React from 'react';
 import PropTypes from 'prop-types';
 import clsx from 'clsx';
-import { chainPropTypes, deepmerge } from '@material-ui/utils';
+import { chainPropTypes, integerPropType } from '@material-ui/utils';
 import { unstable_composeClasses as composeClasses } from '@material-ui/unstyled';
-import { alpha } from '../styles/colorManipulator';
+import { alpha } from '@material-ui/system';
 import Popper from '../Popper';
 import ListSubheader from '../ListSubheader';
 import Paper from '../Paper';
@@ -13,54 +13,9 @@ import ClearIcon from '../internal/svg-icons/Close';
 import ArrowDropDownIcon from '../internal/svg-icons/ArrowDropDown';
 import useAutocomplete, { createFilterOptions } from '../useAutocomplete';
 import useThemeProps from '../styles/useThemeProps';
-import experimentalStyled from '../styles/experimentalStyled';
+import styled from '../styles/styled';
 import autocompleteClasses, { getAutocompleteUtilityClass } from './autocompleteClasses';
-import { capitalize } from '../utils';
-
-const overridesResolver = (props, styles) => {
-  const { styleProps } = props;
-  const {
-    disablePortal,
-    fullWidth,
-    hasClearIcon,
-    hasPopupIcon,
-    inputFocused,
-    popupOpen,
-    size,
-  } = styleProps;
-
-  return deepmerge(styles.root || {}, {
-    ...(fullWidth && styles.fullWidth),
-    ...(hasPopupIcon && styles.hasPopupIcon),
-    ...(hasClearIcon && styles.hasClearIcon),
-    [`& .${autocompleteClasses.tag}`]: {
-      ...styles.tag,
-      ...styles[`tagSize${capitalize(size)}`],
-    },
-    [`& .${autocompleteClasses.inputRoot}`]: styles.inputRoot,
-    [`& .${autocompleteClasses.input}`]: {
-      ...styles.input,
-      ...(inputFocused && styles.inputFocused),
-    },
-    [`& .${autocompleteClasses.endAdornment}`]: styles.endAdornment,
-    [`& .${autocompleteClasses.clearIndicator}`]: styles.clearIndicator,
-    [`& .${autocompleteClasses.popupIndicator}`]: {
-      ...styles.popupIndicator,
-      ...(popupOpen && styles.popupIndicatorOpen),
-    },
-    [`& .${autocompleteClasses.popper}`]: {
-      ...styles.popper,
-      ...(disablePortal && styles.popperDisablePortal),
-    },
-    [`& .${autocompleteClasses.paper}`]: styles.paper,
-    [`& .${autocompleteClasses.listbox}`]: styles.listbox,
-    [`& .${autocompleteClasses.loading}`]: styles.loading,
-    [`& .${autocompleteClasses.noOptions}`]: styles.noOptions,
-    [`& .${autocompleteClasses.option}`]: styles.option,
-    [`& .${autocompleteClasses.groupLabel}`]: styles.groupLabel,
-    [`& .${autocompleteClasses.groupUl}`]: styles.groupUl,
-  });
-};
+import capitalize from '../utils/capitalize';
 
 const useUtilityClasses = (styleProps) => {
   const {
@@ -85,7 +40,7 @@ const useUtilityClasses = (styleProps) => {
     ],
     inputRoot: ['inputRoot'],
     input: ['input', inputFocused && 'inputFocused'],
-    tag: ['tag', `tagSize${capitalize(size)})`],
+    tag: ['tag', `tagSize${capitalize(size)}`],
     endAdornment: ['endAdornment'],
     clearIndicator: ['clearIndicator'],
     popupIndicator: ['popupIndicator', popupOpen && 'popupIndicatorOpen'],
@@ -102,17 +57,27 @@ const useUtilityClasses = (styleProps) => {
   return composeClasses(slots, getAutocompleteUtilityClass, classes);
 };
 
-const AutocompleteRoot = experimentalStyled(
-  'div',
-  {},
-  {
-    name: 'MuiAutocomplete',
-    slot: 'Root',
-    overridesResolver,
+const AutocompleteRoot = styled('div', {
+  name: 'MuiAutocomplete',
+  slot: 'Root',
+  overridesResolver: (props, styles) => {
+    const { styleProps } = props;
+    const { fullWidth, hasClearIcon, hasPopupIcon, inputFocused, size } = styleProps;
+
+    return [
+      { [`& .${autocompleteClasses.tag}`]: styles.tag },
+      { [`& .${autocompleteClasses.tag}`]: styles[`tagSize${capitalize(size)}`] },
+      { [`& .${autocompleteClasses.inputRoot}`]: styles.inputRoot },
+      { [`& .${autocompleteClasses.input}`]: styles.input },
+      { [`& .${autocompleteClasses.input}`]: inputFocused && styles.inputFocused },
+      styles.root,
+      fullWidth && styles.fullWidth,
+      hasPopupIcon && styles.hasPopupIcon,
+      hasClearIcon && styles.hasClearIcon,
+    ];
   },
-)(({ styleProps }) => ({
-  /* Styles applied to the root element. */
-  [`&.Mui-focused .${autocompleteClasses.clearIndicator}`]: {
+})(({ styleProps }) => ({
+  [`&.${autocompleteClasses.focused} .${autocompleteClasses.clearIndicator}`]: {
     visibility: 'visible',
   },
   /* Avoid double tap issue on iOS */
@@ -121,21 +86,17 @@ const AutocompleteRoot = experimentalStyled(
       visibility: 'visible',
     },
   },
-  /* Styles applied to the root element if `fullWidth={true}`. */
   ...(styleProps.fullWidth && {
     width: '100%',
   }),
-  /* Styles applied to the tag elements, e.g. the chips. */
   [`& .${autocompleteClasses.tag}`]: {
     margin: 3,
     maxWidth: 'calc(100% - 6px)',
-    /* Styles applied to the tag elements, e.g. the chips if `size="small"`. */
     ...(styleProps.size === 'small' && {
       margin: 2,
       maxWidth: 'calc(100% - 4px)',
     }),
   },
-  /* Styles applied to the Input element. */
   [`& .${autocompleteClasses.inputRoot}`]: {
     flexWrap: 'wrap',
     [`.${autocompleteClasses.hasPopupIcon}&, .${autocompleteClasses.hasClearIcon}&`]: {
@@ -148,178 +109,163 @@ const AutocompleteRoot = experimentalStyled(
       width: 0,
       minWidth: 30,
     },
-    '&.MuiInput-root': {
-      paddingBottom: 1,
-      '& .MuiInput-input': {
-        padding: '6px 4px 6px 0px',
-      },
-    },
-    '&.MuiInput-root.MuiInputBase-sizeSmall': {
-      '& .MuiInput-input': {
-        padding: '2px 4px 3px 0',
-      },
-    },
-    '&.MuiOutlinedInput-root': {
-      padding: 9,
-      [`.${autocompleteClasses.hasPopupIcon}&, .${autocompleteClasses.hasClearIcon}&`]: {
-        paddingRight: 26 + 4 + 9,
-      },
-      [`.${autocompleteClasses.hasPopupIcon}.${autocompleteClasses.hasClearIcon}&`]: {
-        paddingRight: 52 + 4 + 9,
-      },
-      [`& .${autocompleteClasses.input}`]: {
-        padding: '7.5px 4px 7.5px 6px',
-      },
-      [`& .${autocompleteClasses.endAdornment}`]: {
-        right: 9,
-      },
-    },
-    '&.MuiOutlinedInput-root.MuiInputBase-sizeSmall': {
-      padding: 6,
-      [`& .${autocompleteClasses.input}`]: {
-        padding: '2.5px 4px 2.5px 6px',
-      },
-    },
-    '&.MuiFilledInput-root': {
-      paddingTop: 19,
-      paddingLeft: 8,
-      [`.${autocompleteClasses.hasPopupIcon}&, .${autocompleteClasses.hasClearIcon}&`]: {
-        paddingRight: 26 + 4 + 9,
-      },
-      [`.${autocompleteClasses.hasPopupIcon}.${autocompleteClasses.hasClearIcon}&`]: {
-        paddingRight: 52 + 4 + 9,
-      },
-      '& .MuiFilledInput-input': {
-        padding: '7px 4px',
-      },
-      [`& .${autocompleteClasses.endAdornment}`]: {
-        right: 9,
-      },
-    },
-    '&.MuiFilledInput-root.MuiInputBase-sizeSmall': {
-      paddingBottom: 1,
-      '& .MuiFilledInput-input': {
-        padding: '2.5px 4px',
-      },
+  },
+  '& .MuiInput-root': {
+    paddingBottom: 1,
+    '& .MuiInput-input': {
+      padding: '4px 4px 4px 0px',
     },
   },
-  /* Styles applied to the input element. */
+  '& .MuiInput-root.MuiInputBase-sizeSmall': {
+    '& .MuiInput-input': {
+      padding: '2px 4px 3px 0',
+    },
+  },
+  '& .MuiOutlinedInput-root': {
+    padding: 9,
+    [`.${autocompleteClasses.hasPopupIcon}&, .${autocompleteClasses.hasClearIcon}&`]: {
+      paddingRight: 26 + 4 + 9,
+    },
+    [`.${autocompleteClasses.hasPopupIcon}.${autocompleteClasses.hasClearIcon}&`]: {
+      paddingRight: 52 + 4 + 9,
+    },
+    [`& .${autocompleteClasses.input}`]: {
+      padding: '7.5px 4px 7.5px 6px',
+    },
+    [`& .${autocompleteClasses.endAdornment}`]: {
+      right: 9,
+    },
+  },
+  '& .MuiOutlinedInput-root.MuiInputBase-sizeSmall': {
+    padding: 6,
+    [`& .${autocompleteClasses.input}`]: {
+      padding: '2.5px 4px 2.5px 6px',
+    },
+  },
+  '& .MuiFilledInput-root': {
+    paddingTop: 19,
+    paddingLeft: 8,
+    [`.${autocompleteClasses.hasPopupIcon}&, .${autocompleteClasses.hasClearIcon}&`]: {
+      paddingRight: 26 + 4 + 9,
+    },
+    [`.${autocompleteClasses.hasPopupIcon}.${autocompleteClasses.hasClearIcon}&`]: {
+      paddingRight: 52 + 4 + 9,
+    },
+    '& .MuiFilledInput-input': {
+      padding: '7px 4px',
+    },
+    [`& .${autocompleteClasses.endAdornment}`]: {
+      right: 9,
+    },
+  },
+  '& .MuiFilledInput-root.MuiInputBase-sizeSmall': {
+    paddingBottom: 1,
+    '& .MuiFilledInput-input': {
+      padding: '2.5px 4px',
+    },
+  },
   [`& .${autocompleteClasses.input}`]: {
     flexGrow: 1,
     textOverflow: 'ellipsis',
     opacity: 0,
-    /* Styles applied to the input element if tag focused. */
     ...(styleProps.inputFocused && {
       opacity: 1,
     }),
   },
 }));
 
-const AutocompleteEndAdornment = experimentalStyled(
-  'div',
-  {},
-  {
-    name: 'MuiAutocomplete',
-    slot: 'EndAdornment',
-  },
-)({
-  /* Styles applied to the endAdornment element. */
+const AutocompleteEndAdornment = styled('div', {
+  name: 'MuiAutocomplete',
+  slot: 'EndAdornment',
+  overridesResolver: (props, styles) => styles.endAdornment,
+})({
   // We use a position absolute to support wrapping tags.
   position: 'absolute',
   right: 0,
   top: 'calc(50% - 14px)', // Center vertically
 });
 
-const AutocompleteClearIndicator = experimentalStyled(
-  IconButton,
-  {},
-  {
-    name: 'MuiAutocomplete',
-    slot: 'ClearIndicator',
-  },
-)({
-  /* Styles applied to the clear indicator. */
+const AutocompleteClearIndicator = styled(IconButton, {
+  name: 'MuiAutocomplete',
+  slot: 'ClearIndicator',
+  overridesResolver: (props, styles) => styles.clearIndicator,
+})({
   marginRight: -2,
   padding: 4,
   visibility: 'hidden',
 });
 
-const AutocompletePopupIndicator = experimentalStyled(
-  IconButton,
-  {},
-  {
-    name: 'MuiAutocomplete',
-    slot: 'PopupIndicator',
-  },
-)(({ styleProps }) => ({
-  /* Styles applied to the popup indicator. */
+const AutocompletePopupIndicator = styled(IconButton, {
+  name: 'MuiAutocomplete',
+  slot: 'PopupIndicator',
+  overridesResolver: ({ styleProps }, styles) => ({
+    ...styles.popupIndicator,
+    ...(styleProps.popupOpen && styles.popupIndicatorOpen),
+  }),
+})(({ styleProps }) => ({
   padding: 2,
   marginRight: -2,
-  /* Styles applied to the popup indicator if the popup is open. */
   ...(styleProps.popupOpen && {
     transform: 'rotate(180deg)',
   }),
 }));
 
-const AutocompletePopper = experimentalStyled(
-  Popper,
-  {},
-  {
-    name: 'MuiAutocomplete',
-    slot: 'Popper',
+const AutocompletePopper = styled(Popper, {
+  name: 'MuiAutocomplete',
+  slot: 'Popper',
+  overridesResolver: (props, styles) => {
+    const { styleProps } = props;
+
+    return [
+      { [`& .${autocompleteClasses.option}`]: styles.option },
+      styles.popper,
+      styleProps.disablePortal && styles.popperDisablePortal,
+    ];
   },
-)(({ theme, styleProps }) => ({
-  /* Styles applied to the popper element. */
+})(({ theme, styleProps }) => ({
   zIndex: theme.zIndex.modal,
-  /* Styles applied to the popper element if `disablePortal={true}`. */
   ...(styleProps.disablePortal && {
     position: 'absolute',
   }),
 }));
 
-const AutocompletePaper = experimentalStyled(
-  Paper,
-  {},
-  { name: 'MuiAutocomplete', slot: 'Paper' },
-)(({ theme }) => ({
-  /* Styles applied to the Paper component. */
+const AutocompletePaper = styled(Paper, {
+  name: 'MuiAutocomplete',
+  slot: 'Paper',
+  overridesResolver: (props, styles) => styles.paper,
+})(({ theme }) => ({
   ...theme.typography.body1,
   overflow: 'auto',
-  margin: '4px 0',
 }));
 
-const AutocompleteLoading = experimentalStyled(
-  'div',
-  {},
-  { name: 'MuiAutocomplete', slot: 'Loading' },
-)(({ theme }) => ({
-  /* Styles applied to the loading wrapper. */
+const AutocompleteLoading = styled('div', {
+  name: 'MuiAutocomplete',
+  slot: 'Loading',
+  overridesResolver: (props, styles) => styles.loading,
+})(({ theme }) => ({
   color: theme.palette.text.secondary,
   padding: '14px 16px',
 }));
 
-const AutocompleteNoOptions = experimentalStyled(
-  'div',
-  {},
-  { name: 'MuiAutocomplete', slot: 'NoOptions' },
-)(({ theme }) => ({
-  /* Styles applied to the no option wrapper. */
+const AutocompleteNoOptions = styled('div', {
+  name: 'MuiAutocomplete',
+  slot: 'NoOptions',
+  overridesResolver: (props, styles) => styles.noOptions,
+})(({ theme }) => ({
   color: theme.palette.text.secondary,
   padding: '14px 16px',
 }));
 
-const AutocompleteListbox = experimentalStyled(
-  'div',
-  {},
-  { name: 'MuiAutocomplete', slot: 'Listbox' },
-)(({ theme }) => ({
-  /* Styles applied to the listbox component. */
+const AutocompleteListbox = styled('div', {
+  name: 'MuiAutocomplete',
+  slot: 'Listbox',
+  overridesResolver: (props, styles) => styles.listbox,
+})(({ theme }) => ({
   listStyle: 'none',
   margin: 0,
   padding: '8px 0',
   maxHeight: '40vh',
   overflow: 'auto',
-  /* Styles applied to the option elements. */
   [`& .${autocompleteClasses.option}`]: {
     minHeight: 48,
     display: 'flex',
@@ -337,7 +283,7 @@ const AutocompleteListbox = experimentalStyled(
     [theme.breakpoints.up('sm')]: {
       minHeight: 'auto',
     },
-    '&[data-focus="true"]': {
+    [`&.${autocompleteClasses.focused}`]: {
       backgroundColor: theme.palette.action.hover,
       // Reset on touch devices, it doesn't add specificity
       '@media (hover: none)': {
@@ -348,12 +294,12 @@ const AutocompleteListbox = experimentalStyled(
       opacity: theme.palette.action.disabledOpacity,
       pointerEvents: 'none',
     },
-    '&.Mui-focusVisible': {
+    [`&.${autocompleteClasses.focusVisible}`]: {
       backgroundColor: theme.palette.action.focus,
     },
     '&[aria-selected="true"]': {
       backgroundColor: alpha(theme.palette.primary.main, theme.palette.action.selectedOpacity),
-      '&[data-focus="true"]': {
+      [`&.${autocompleteClasses.focused}`]: {
         backgroundColor: alpha(
           theme.palette.primary.main,
           theme.palette.action.selectedOpacity + theme.palette.action.hoverOpacity,
@@ -363,7 +309,7 @@ const AutocompleteListbox = experimentalStyled(
           backgroundColor: theme.palette.action.selected,
         },
       },
-      '&.Mui-focusVisible': {
+      [`&.${autocompleteClasses.focusVisible}`]: {
         backgroundColor: alpha(
           theme.palette.primary.main,
           theme.palette.action.selectedOpacity + theme.palette.action.focusOpacity,
@@ -373,28 +319,20 @@ const AutocompleteListbox = experimentalStyled(
   },
 }));
 
-const AutocompleteGroupLabel = experimentalStyled(
-  ListSubheader,
-  {},
-  {
-    name: 'MuiAutocomplete',
-    slot: 'GroupLabel',
-  },
-)(({ theme }) => ({
-  /* Styles applied to the group's label elements. */
+const AutocompleteGroupLabel = styled(ListSubheader, {
+  name: 'MuiAutocomplete',
+  slot: 'GroupLabel',
+  overridesResolver: (props, styles) => styles.groupLabel,
+})(({ theme }) => ({
   backgroundColor: theme.palette.background.paper,
   top: -8,
 }));
 
-const AutocompleteGroupUl = experimentalStyled(
-  'ul',
-  {},
-  {
-    name: 'MuiAutocomplete',
-    slot: 'GroupUl',
-  },
-)({
-  /* Styles applied to the group's ul elements. */
+const AutocompleteGroupUl = styled('ul', {
+  name: 'MuiAutocomplete',
+  slot: 'GroupUl',
+  overridesResolver: (props, styles) => styles.groupUl,
+})({
   padding: 0,
   [`& .${autocompleteClasses.option}`]: {
     paddingLeft: 24,
@@ -418,6 +356,7 @@ const Autocomplete = React.forwardRef(function Autocomplete(inProps, ref) {
     clearOnEscape = false,
     clearText = 'Clear',
     closeText = 'Close',
+    componentsProps = {},
     defaultValue = props.multiple ? [] : null,
     disableClearable = false,
     disableCloseOnSelect = false,
@@ -433,7 +372,7 @@ const Autocomplete = React.forwardRef(function Autocomplete(inProps, ref) {
     getLimitTagsText = (more) => `+${more}`,
     getOptionDisabled,
     getOptionLabel = (option) => option.label ?? option,
-    getOptionSelected,
+    isOptionEqualToValue,
     groupBy,
     handleHomeEndKeys = !props.freeSolo,
     id: idProp,
@@ -595,8 +534,12 @@ const Autocomplete = React.forwardRef(function Autocomplete(inProps, ref) {
                     {...getClearProps()}
                     aria-label={clearText}
                     title={clearText}
-                    className={classes.clearIndicator}
                     styleProps={styleProps}
+                    {...componentsProps.clearIndicator}
+                    className={clsx(
+                      classes.clearIndicator,
+                      componentsProps.clearIndicator?.className,
+                    )}
                   >
                     {clearIcon}
                   </AutocompleteClearIndicator>
@@ -685,7 +628,7 @@ const Autocomplete = React.forwardRef(function Autocomplete(inProps, ref) {
   );
 });
 
-Autocomplete.propTypes = {
+Autocomplete.propTypes /* remove-proptypes */ = {
   // ----------------------------- Warning --------------------------------
   // | These PropTypes are generated from the TypeScript type definitions |
   // |     To update them edit the d.ts file and run "yarn proptypes"     |
@@ -763,6 +706,11 @@ Autocomplete.propTypes = {
    * @default 'Close'
    */
   closeText: PropTypes.string,
+  /**
+   * The props used for each slot inside.
+   * @default {}
+   */
+  componentsProps: PropTypes.object,
   /**
    * The default value. Use when the component is not controlled.
    * @default props.multiple ? [] : null
@@ -851,16 +799,6 @@ Autocomplete.propTypes = {
    */
   getOptionLabel: PropTypes.func,
   /**
-   * Used to determine if an option is selected, considering the current value(s).
-   * Uses strict equality by default.
-   * ⚠️ Both arguments need to be handled, an option can only match with one value.
-   *
-   * @param {T} option The option to test.
-   * @param {T} value The value to test against.
-   * @returns {boolean}
-   */
-  getOptionSelected: PropTypes.func,
-  /**
    * If provided, the options will be grouped under the returned string.
    * The groupBy value is also used as the text for group headings when `renderGroup` is not provided.
    *
@@ -876,7 +814,7 @@ Autocomplete.propTypes = {
   handleHomeEndKeys: PropTypes.bool,
   /**
    * This prop is used to help implement the accessibility logic.
-   * If you don't provide this prop. It falls back to a randomly generated id.
+   * If you don't provide an id it will fall back to a randomly generated one.
    */
   id: PropTypes.string,
   /**
@@ -889,11 +827,21 @@ Autocomplete.propTypes = {
    */
   inputValue: PropTypes.string,
   /**
+   * Used to determine if the option represents the given value.
+   * Uses strict equality by default.
+   * ⚠️ Both arguments need to be handled, an option can only match with one value.
+   *
+   * @param {T} option The option to test.
+   * @param {T} value The value to test against.
+   * @returns {boolean}
+   */
+  isOptionEqualToValue: PropTypes.func,
+  /**
    * The maximum number of tags that will be visible when not focused.
    * Set `-1` to disable the limit.
    * @default -1
    */
-  limitTags: PropTypes.number,
+  limitTags: integerPropType,
   /**
    * The component used to render the listbox.
    * @default 'ul'
@@ -932,7 +880,7 @@ Autocomplete.propTypes = {
    *
    * @param {object} event The event source of the callback.
    * @param {T|T[]} value The new value of the component.
-   * @param {string} reason One of "create-option", "select-option", "remove-option", "blur" or "clear".
+   * @param {string} reason One of "createOption", "selectOption", "removeOption", "blur" or "clear".
    * @param {string} [details]
    */
   onChange: PropTypes.func,
@@ -941,7 +889,7 @@ Autocomplete.propTypes = {
    * Use in controlled mode (see open).
    *
    * @param {object} event The event source of the callback.
-   * @param {string} reason Can be: `"toggleInput"`, `"escape"`, `"select-option"`, `"remove-option"`, `"blur"`.
+   * @param {string} reason Can be: `"toggleInput"`, `"escape"`, `"selectOption"`, `"removeOption"`, `"blur"`.
    */
   onClose: PropTypes.func,
   /**
@@ -1043,7 +991,10 @@ Autocomplete.propTypes = {
    * The size of the component.
    * @default 'medium'
    */
-  size: PropTypes.oneOf(['medium', 'small']),
+  size: PropTypes /* @typescript-to-proptypes-ignore */.oneOfType([
+    PropTypes.oneOf(['small', 'medium']),
+    PropTypes.string,
+  ]),
   /**
    * The system prop that allows defining system overrides as well as additional CSS styles.
    */
@@ -1052,7 +1003,7 @@ Autocomplete.propTypes = {
    * The value of the autocomplete.
    *
    * The value must have reference equality with the option in order to be selected.
-   * You can customize the equality behavior with the `getOptionSelected` prop.
+   * You can customize the equality behavior with the `isOptionEqualToValue` prop.
    */
   value: chainPropTypes(PropTypes.any, (props) => {
     if (props.multiple && props.value !== undefined && !Array.isArray(props.value)) {

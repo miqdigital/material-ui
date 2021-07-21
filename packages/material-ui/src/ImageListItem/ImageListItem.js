@@ -1,23 +1,14 @@
 import { unstable_composeClasses as composeClasses } from '@material-ui/unstyled';
-import { deepmerge } from '@material-ui/utils';
+import { integerPropType } from '@material-ui/utils';
 import clsx from 'clsx';
 import PropTypes from 'prop-types';
 import * as React from 'react';
 import { isFragment } from 'react-is';
 import ImageListContext from '../ImageList/ImageListContext';
-import experimentalStyled from '../styles/experimentalStyled';
+import styled from '../styles/styled';
 import useThemeProps from '../styles/useThemeProps';
 import isMuiElement from '../utils/isMuiElement';
 import imageListItemClasses, { getImageListItemUtilityClass } from './imageListItemClasses';
-
-const overridesResolver = (props, styles) => {
-  const { styleProps } = props;
-
-  return deepmerge(styles.root || {}, {
-    ...styles[styleProps.variant],
-    [`& .${imageListItemClasses.img}`]: styles.img,
-  });
-};
 
 const useUtilityClasses = (styleProps) => {
   const { classes, variant } = styleProps;
@@ -30,25 +21,27 @@ const useUtilityClasses = (styleProps) => {
   return composeClasses(slots, getImageListItemUtilityClass, classes);
 };
 
-const ImageListItemRoot = experimentalStyled(
-  'li',
-  {},
-  {
-    name: 'MuiImageListItem',
-    slot: 'Root',
-    overridesResolver,
+const ImageListItemRoot = styled('li', {
+  name: 'MuiImageListItem',
+  slot: 'Root',
+  overridesResolver: (props, styles) => {
+    const { styleProps } = props;
+
+    return [
+      { [`& .${imageListItemClasses.img}`]: styles.img },
+      styles.root,
+      styles[styleProps.variant],
+    ];
   },
-)(({ styleProps }) => ({
+})(({ styleProps }) => ({
   display: 'inline-block',
   position: 'relative',
   lineHeight: 0, // 🤷🏻‍♂️Fixes masonry item gap
-  /* Styles applied to the root element if `variant="standard"`. */
   ...(styleProps.variant === 'standard' && {
     // For titlebar under list item
     display: 'flex',
     flexDirection: 'column',
   }),
-  /* Styles applied to the root element if `variant="woven"`. */
   ...(styleProps.variant === 'woven' && {
     height: '100%',
     alignSelf: 'center',
@@ -140,7 +133,7 @@ const ImageListItem = React.forwardRef(function ImageListItem(inProps, ref) {
   );
 });
 
-ImageListItem.propTypes = {
+ImageListItem.propTypes /* remove-proptypes */ = {
   // ----------------------------- Warning --------------------------------
   // | These PropTypes are generated from the TypeScript type definitions |
   // |     To update them edit the d.ts file and run "yarn proptypes"     |
@@ -161,7 +154,7 @@ ImageListItem.propTypes = {
    * Width of the item in number of grid columns.
    * @default 1
    */
-  cols: PropTypes.number,
+  cols: integerPropType,
   /**
    * The component used for the root node.
    * Either a string to use a HTML element or a component.
@@ -171,7 +164,7 @@ ImageListItem.propTypes = {
    * Height of the item in number of grid rows.
    * @default 1
    */
-  rows: PropTypes.number,
+  rows: integerPropType,
   /**
    * @ignore
    */

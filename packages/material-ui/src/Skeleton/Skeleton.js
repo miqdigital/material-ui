@@ -1,25 +1,12 @@
 import * as React from 'react';
 import clsx from 'clsx';
 import PropTypes from 'prop-types';
-import { keyframes, css } from '@material-ui/styled-engine';
+import { keyframes, css } from '@material-ui/system';
 import { unstable_composeClasses as composeClasses } from '@material-ui/unstyled';
-import { deepmerge } from '@material-ui/utils';
 import { alpha, unstable_getUnit as getUnit, unstable_toUnitless as toUnitless } from '../styles';
-import experimentalStyled from '../styles/experimentalStyled';
+import styled from '../styles/styled';
 import useThemeProps from '../styles/useThemeProps';
 import { getSkeletonUtilityClass } from './skeletonClasses';
-
-const overridesResolver = (props, styles) => {
-  const { styleProps } = props;
-
-  return deepmerge(styles.root || {}, {
-    ...styles[styleProps.variant],
-    ...(styleProps.animation !== false && styles[styleProps.animation]),
-    ...(styleProps.hasChildren && styles.withChildren),
-    ...(styleProps.hasChildren && !styleProps.width && styles.fitContent),
-    ...(styleProps.hasChildren && !styleProps.height && styles.heightAuto),
-  });
-};
 
 const useUtilityClasses = (styleProps) => {
   const { classes, variant, animation, hasChildren, width, height } = styleProps;
@@ -67,17 +54,27 @@ const waveKeyframe = keyframes`
   }
 `;
 
-const SkeletonRoot = experimentalStyled(
-  'span',
-  {},
-  { name: 'MuiSkeleton', slot: 'Root', overridesResolver },
-)(
+const SkeletonRoot = styled('span', {
+  name: 'MuiSkeleton',
+  slot: 'Root',
+  overridesResolver: (props, styles) => {
+    const { styleProps } = props;
+
+    return [
+      styles.root,
+      styles[styleProps.variant],
+      styleProps.animation !== false && styles[styleProps.animation],
+      styleProps.hasChildren && styles.withChildren,
+      styleProps.hasChildren && !styleProps.width && styles.fitContent,
+      styleProps.hasChildren && !styleProps.height && styles.heightAuto,
+    ];
+  },
+})(
   ({ theme, styleProps }) => {
     const radiusUnit = getUnit(theme.shape.borderRadius) || 'px';
     const radiusValue = toUnitless(theme.shape.borderRadius);
 
     return {
-      /* Styles applied to the root element. */
       display: 'block',
       // Create a "on paper" color with sufficient contrast retaining the color
       backgroundColor: alpha(
@@ -85,7 +82,6 @@ const SkeletonRoot = experimentalStyled(
         theme.palette.mode === 'light' ? 0.11 : 0.13,
       ),
       height: '1.2em',
-      /* Styles applied to the root element if `variant="text"`. */
       ...(styleProps.variant === 'text' && {
         marginTop: 0,
         marginBottom: 0,
@@ -99,35 +95,29 @@ const SkeletonRoot = experimentalStyled(
           content: '"\\00a0"',
         },
       }),
-      /* Styles applied to the root element if `variant="circular"`. */
       ...(styleProps.variant === 'circular' && {
         borderRadius: '50%',
       }),
-      /* Styles applied when the component is passed children. */
       ...(styleProps.hasChildren && {
         '& > *': {
           visibility: 'hidden',
         },
       }),
-      /* Styles applied when the component is passed children and no width. */
       ...(styleProps.hasChildren &&
         !styleProps.width && {
           maxWidth: 'fit-content',
         }),
-      /* Styles applied when the component is passed children and no height. */
       ...(styleProps.hasChildren &&
         !styleProps.height && {
           height: 'auto',
         }),
     };
   },
-  /* Styles applied to the root element if `animation="pulse"`. */
   ({ styleProps }) =>
     styleProps.animation === 'pulse' &&
     css`
       animation: ${pulseKeyframe} 1.5s ease-in-out 0.5s infinite;
     `,
-  /* Styles applied to the root element if `animation="wave"`. */
   ({ styleProps, theme }) =>
     styleProps.animation === 'wave' &&
     css`
@@ -190,7 +180,7 @@ const Skeleton = React.forwardRef(function Skeleton(inProps, ref) {
   );
 });
 
-Skeleton.propTypes = {
+Skeleton.propTypes /* remove-proptypes */ = {
   // ----------------------------- Warning --------------------------------
   // | These PropTypes are generated from the TypeScript type definitions |
   // |     To update them edit the d.ts file and run "yarn proptypes"     |

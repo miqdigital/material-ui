@@ -1,20 +1,10 @@
 import * as React from 'react';
 import PropTypes from 'prop-types';
 import clsx from 'clsx';
-import { deepmerge } from '@material-ui/utils';
 import { unstable_composeClasses as composeClasses } from '@material-ui/unstyled';
 import useThemeProps from '../styles/useThemeProps';
-import experimentalStyled from '../styles/experimentalStyled';
+import styled from '../styles/styled';
 import { getToolbarUtilityClass } from './toolbarClasses';
-
-const overridesResolver = (props, styles) => {
-  const { styleProps } = props;
-
-  return deepmerge(styles.root || {}, {
-    ...(!styleProps.disableGutters && styles.gutters),
-    ...styles[styleProps.variant],
-  });
-};
 
 const useUtilityClasses = (styleProps) => {
   const { classes, disableGutters, variant } = styleProps;
@@ -26,21 +16,19 @@ const useUtilityClasses = (styleProps) => {
   return composeClasses(slots, getToolbarUtilityClass, classes);
 };
 
-const ToolbarRoot = experimentalStyled(
-  'div',
-  {},
-  {
-    name: 'MuiToolbar',
-    slot: 'Root',
-    overridesResolver,
+const ToolbarRoot = styled('div', {
+  name: 'MuiToolbar',
+  slot: 'Root',
+  overridesResolver: (props, styles) => {
+    const { styleProps } = props;
+
+    return [styles.root, !styleProps.disableGutters && styles.gutters, styles[styleProps.variant]];
   },
-)(
+})(
   ({ theme, styleProps }) => ({
-    /* Styles applied to the root element. */
     position: 'relative',
     display: 'flex',
     alignItems: 'center',
-    /* Styles applied to the root element unless `disableGutters={true}`. */
     ...(!styleProps.disableGutters && {
       paddingLeft: theme.spacing(2),
       paddingRight: theme.spacing(2),
@@ -49,12 +37,10 @@ const ToolbarRoot = experimentalStyled(
         paddingRight: theme.spacing(3),
       },
     }),
-    /* Styles applied to the root element if `variant="dense"`. */
     ...(styleProps.variant === 'dense' && {
       minHeight: 48,
     }),
   }),
-  /* Styles applied to the root element if `variant="regular"`. */
   ({ theme, styleProps }) => styleProps.variant === 'regular' && theme.mixins.toolbar,
 );
 
@@ -88,7 +74,7 @@ const Toolbar = React.forwardRef(function Toolbar(inProps, ref) {
   );
 });
 
-Toolbar.propTypes = {
+Toolbar.propTypes /* remove-proptypes */ = {
   // ----------------------------- Warning --------------------------------
   // | These PropTypes are generated from the TypeScript type definitions |
   // |     To update them edit the d.ts file and run "yarn proptypes"     |

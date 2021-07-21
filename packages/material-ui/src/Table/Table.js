@@ -1,21 +1,11 @@
 import * as React from 'react';
 import PropTypes from 'prop-types';
 import clsx from 'clsx';
-import { deepmerge } from '@material-ui/utils';
 import { unstable_composeClasses as composeClasses } from '@material-ui/unstyled';
 import TableContext from './TableContext';
-
 import useThemeProps from '../styles/useThemeProps';
-import experimentalStyled from '../styles/experimentalStyled';
+import styled from '../styles/styled';
 import { getTableUtilityClass } from './tableClasses';
-
-const overridesResolver = (props, styles) => {
-  const { styleProps } = props;
-
-  return deepmerge(styles.root || {}, {
-    ...(styleProps.stickyHeader && styles.stickyHeader),
-  });
-};
 
 const useUtilityClasses = (styleProps) => {
   const { classes, stickyHeader } = styleProps;
@@ -27,16 +17,15 @@ const useUtilityClasses = (styleProps) => {
   return composeClasses(slots, getTableUtilityClass, classes);
 };
 
-const TableRoot = experimentalStyled(
-  'table',
-  {},
-  {
-    name: 'MuiTable',
-    slot: 'Root',
-    overridesResolver,
+const TableRoot = styled('table', {
+  name: 'MuiTable',
+  slot: 'Root',
+  overridesResolver: (props, styles) => {
+    const { styleProps } = props;
+
+    return [styles.root, styleProps.stickyHeader && styles.stickyHeader];
   },
-)(({ theme, styleProps }) => ({
-  /* Styles applied to the root element. */
+})(({ theme, styleProps }) => ({
   display: 'table',
   width: '100%',
   borderCollapse: 'collapse',
@@ -48,7 +37,6 @@ const TableRoot = experimentalStyled(
     textAlign: 'left',
     captionSide: 'bottom',
   },
-  /* Styles applied to the root element if `stickyHeader={true}`. */
   ...(styleProps.stickyHeader && {
     borderCollapse: 'separate',
   }),
@@ -61,7 +49,7 @@ const Table = React.forwardRef(function Table(inProps, ref) {
   const {
     className,
     component = defaultComponent,
-    padding = 'default',
+    padding = 'normal',
     size = 'medium',
     stickyHeader = false,
     ...other
@@ -77,11 +65,10 @@ const Table = React.forwardRef(function Table(inProps, ref) {
 
   const classes = useUtilityClasses(styleProps);
 
-  const table = React.useMemo(() => ({ padding, size, stickyHeader }), [
-    padding,
-    size,
-    stickyHeader,
-  ]);
+  const table = React.useMemo(
+    () => ({ padding, size, stickyHeader }),
+    [padding, size, stickyHeader],
+  );
 
   return (
     <TableContext.Provider value={table}>
@@ -97,7 +84,7 @@ const Table = React.forwardRef(function Table(inProps, ref) {
   );
 });
 
-Table.propTypes = {
+Table.propTypes /* remove-proptypes */ = {
   // ----------------------------- Warning --------------------------------
   // | These PropTypes are generated from the TypeScript type definitions |
   // |     To update them edit the d.ts file and run "yarn proptypes"     |
@@ -121,14 +108,17 @@ Table.propTypes = {
   component: PropTypes.elementType,
   /**
    * Allows TableCells to inherit padding of the Table.
-   * @default 'default'
+   * @default 'normal'
    */
-  padding: PropTypes.oneOf(['checkbox', 'default', 'none']),
+  padding: PropTypes.oneOf(['checkbox', 'none', 'normal']),
   /**
    * Allows TableCells to inherit size of the Table.
    * @default 'medium'
    */
-  size: PropTypes.oneOf(['medium', 'small']),
+  size: PropTypes /* @typescript-to-proptypes-ignore */.oneOfType([
+    PropTypes.oneOf(['medium', 'small']),
+    PropTypes.string,
+  ]),
   /**
    * Set the header sticky.
    *

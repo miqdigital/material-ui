@@ -3,30 +3,36 @@ import PropTypes from 'prop-types';
 import clsx from 'clsx';
 import { refType } from '@material-ui/utils';
 import { unstable_composeClasses as composeClasses } from '@material-ui/unstyled';
-import experimentalStyled from '../styles/experimentalStyled';
+import capitalize from '../utils/capitalize';
+import styled from '../styles/styled';
 import useControlled from '../utils/useControlled';
 import useFormControl from '../FormControl/useFormControl';
-import IconButton from '../IconButton';
+import ButtonBase from '../ButtonBase';
 import { getSwitchBaseUtilityClass } from './switchBaseClasses';
 
 const useUtilityClasses = (styleProps) => {
-  const { classes, checked, disabled } = styleProps;
+  const { classes, checked, disabled, edge } = styleProps;
 
   const slots = {
-    root: ['root', checked && 'checked', disabled && 'disabled'],
+    root: ['root', checked && 'checked', disabled && 'disabled', edge && `edge${capitalize(edge)}`],
     input: ['input'],
   };
 
   return composeClasses(slots, getSwitchBaseUtilityClass, classes);
 };
 
-const SwitchBaseRoot = experimentalStyled(IconButton)({
-  /* Styles applied to the root element. */
+const SwitchBaseRoot = styled(ButtonBase, { skipSx: true })(({ styleProps }) => ({
   padding: 9,
-});
+  borderRadius: '50%',
+  ...(styleProps.edge === 'start' && {
+    marginLeft: styleProps.size === 'small' ? -3 : -12,
+  }),
+  ...(styleProps.edge === 'end' && {
+    marginRight: styleProps.size === 'small' ? -3 : -12,
+  }),
+}));
 
-const SwitchBaseInput = experimentalStyled('input')({
-  /* Styles applied to the internal input element. */
+const SwitchBaseInput = styled('input', { skipSx: true })({
   cursor: 'inherit',
   position: 'absolute',
   opacity: 0,
@@ -50,6 +56,8 @@ const SwitchBase = React.forwardRef(function SwitchBase(props, ref) {
     className,
     defaultChecked,
     disabled: disabledProp,
+    disableFocusRipple = false,
+    edge = false,
     icon,
     id,
     inputProps,
@@ -105,7 +113,7 @@ const SwitchBase = React.forwardRef(function SwitchBase(props, ref) {
     setCheckedState(newChecked);
 
     if (onChange) {
-      // TODO v5: remove the second argument.
+      // TODO v6: remove the second argument.
       onChange(event, newChecked);
     }
   };
@@ -124,6 +132,8 @@ const SwitchBase = React.forwardRef(function SwitchBase(props, ref) {
     ...props,
     checked,
     disabled,
+    disableFocusRipple,
+    edge,
   };
 
   const classes = useUtilityClasses(styleProps);
@@ -132,6 +142,8 @@ const SwitchBase = React.forwardRef(function SwitchBase(props, ref) {
     <SwitchBaseRoot
       component="span"
       className={clsx(classes.root, className)}
+      centerRipple
+      focusRipple={!disableFocusRipple}
       disabled={disabled}
       tabIndex={null}
       role={undefined}
@@ -196,6 +208,19 @@ SwitchBase.propTypes = {
    * If `true`, the component is disabled.
    */
   disabled: PropTypes.bool,
+  /**
+   * If `true`, the  keyboard focus ripple is disabled.
+   * @default false
+   */
+  disableFocusRipple: PropTypes.bool,
+  /**
+   * If given, uses a negative margin to counteract the padding on one
+   * side (this is often helpful for aligning the left or right
+   * side of the icon with content above or below, without ruining the border
+   * size and shape).
+   * @default false
+   */
+  edge: PropTypes.oneOf(['end', 'start', false]),
   /**
    * The icon to display when the component is unchecked.
    */

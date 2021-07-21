@@ -1,21 +1,11 @@
 import * as React from 'react';
 import PropTypes from 'prop-types';
 import clsx from 'clsx';
-import { chainPropTypes, deepmerge } from '@material-ui/utils';
+import { chainPropTypes } from '@material-ui/utils';
 import { unstable_composeClasses as composeClasses } from '@material-ui/unstyled';
 import useThemeProps from '../styles/useThemeProps';
-import experimentalStyled from '../styles/experimentalStyled';
+import styled from '../styles/styled';
 import { getCardMediaUtilityClass } from './cardMediaClasses';
-
-const overridesResolver = (props, styles) => {
-  const { styleProps } = props;
-  const { isMediaComponent, isImageComponent } = styleProps;
-
-  return deepmerge(styles.root || {}, {
-    ...(isMediaComponent && styles.media),
-    ...(isImageComponent && styles.img),
-  });
-};
 
 const useUtilityClasses = (styleProps) => {
   const { classes, isMediaComponent, isImageComponent } = styleProps;
@@ -27,25 +17,23 @@ const useUtilityClasses = (styleProps) => {
   return composeClasses(slots, getCardMediaUtilityClass, classes);
 };
 
-const CardMediaRoot = experimentalStyled(
-  'div',
-  {},
-  {
-    name: 'MuiCardMedia',
-    slot: 'Root',
-    overridesResolver,
+const CardMediaRoot = styled('div', {
+  name: 'MuiCardMedia',
+  slot: 'Root',
+  overridesResolver: (props, styles) => {
+    const { styleProps } = props;
+    const { isMediaComponent, isImageComponent } = styleProps;
+
+    return [styles.root, isMediaComponent && styles.media, isImageComponent && styles.img];
   },
-)(({ styleProps }) => ({
-  /* Styles applied to the root element. */
+})(({ styleProps }) => ({
   display: 'block',
   backgroundSize: 'cover',
   backgroundRepeat: 'no-repeat',
   backgroundPosition: 'center',
-  /* Styles applied to the root element if `component="video, audio, picture, iframe, or img"`. */
   ...(styleProps.isMediaComponent && {
     width: '100%',
   }),
-  /* Styles applied to the root element if `component="picture or img"`. */
   ...(styleProps.isImageComponent && {
     // ⚠️ object-fit is not supported by IE11.
     objectFit: 'cover',
@@ -87,7 +75,7 @@ const CardMedia = React.forwardRef(function CardMedia(inProps, ref) {
   );
 });
 
-CardMedia.propTypes = {
+CardMedia.propTypes /* remove-proptypes */ = {
   // ----------------------------- Warning --------------------------------
   // | These PropTypes are generated from the TypeScript type definitions |
   // |     To update them edit the d.ts file and run "yarn proptypes"     |
