@@ -2,8 +2,8 @@
 
 This project is used when running the following command:
 
-```sh
-yarn benchmark:browser
+```bash
+pnpm benchmark:browser
 ```
 
 It is suppose to give developers comparable values between running different scenarios inside the browser, that can be find the `./scenarios` folder.
@@ -12,33 +12,41 @@ You should use these numbers exclusively for comparing performance between diffe
 
 ## Output
 
-For compareable results ask a maintainer to approve the CircleCI job `benchmark`.
+For comparable results ask a maintainer to approve the CircleCI job `benchmark`.
 
-```
+```bash
 noop (baseline):
-  06.13 ±00.83ms
+  02.53 ±00.11ms
+Grid (html):
+  28.34 ±01.80ms
+Grid System:
+  167 ±2%
+Grid Material UI:
+  179 ±1%
+Table:
+  128 ±3%
 React primitives:
-  61.38 ±51.51ms
+  54 ±1%
 React components:
-  100 ±6%
-Styled Material-UI:
-  160 ±11%
+  58 ±1%
+Styled MUI:
+  94 ±1%
 Styled emotion:
-  144 ±7%
+  96 ±1%
 Styled SC:
-  170 ±9%
+  94 ±1%
 makeStyles:
-  149 ±5%
+  83 ±0%
 Box Baseline:
-  170 ±12%
-Box Material-UI:
-  402 ±14%
+  106 ±1%
+Box MUI:
+  180 ±1%
 Box Theme-UI:
-  354 ±16%
+  201 ±1%
 Box Chakra-UI:
-  268 ±14%
-styled-components Box + @material-ui/system:
-  373 ±13%
+  131 ±1%
+styled-components Box + @mui/system:
+  184 ±3%
 styled-components Box + styled-system:
-  298 ±13%
+  154 ±3%
 ```
